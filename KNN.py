@@ -42,13 +42,14 @@ class KNN:
             #let's modify distance as numpy array
             sorted_indices=np.argsort(distance[:,0])[:self.k] 
             #let's compute indices for k nearest neighbors
-            distance=distance[sorted_indices,1]
-            #let's compute distance for each distance
-            weights=1/(distance+1e-5)
+            label=distance[sorted_indices,1]
+            #let's compute distance
+            weights=1/(distance[sorted_indices,0]+1e-5)
             #let's compute weights with 1e-5 to avoid division by zero
-            label,counts=np.unique(distance, return_counts=True)
-            #let's compute most commons label and counts them
+            
             if self.task=='classification': 
+                label,counts=np.unique(label, return_counts=True)
+                #let's compute most commons label and counts them
                 label=label[np.argmax(counts)] #if our task is classification let's compute most common labels 
                 #of k nearest neighbors
             elif self.task=='regression':
@@ -121,15 +122,12 @@ plt.show()
 print(classification_report(y_test, y_pred)) #let's check analysis
 
 #Here we make just a simple test for regression
+   
 np.random.seed(42)
-x = np.random.rand(1000, 1)  
-y = np.random.rand(1000, 1)
+X = np.random.rand(500, 1)  
+y = np.sin(2 * np.pi * X).ravel() + np.random.randn(500) * 0.1  # noisy sine wave
 
-X=np.concatenate((x.T,y.T)).T
-  
-Y= 100*np.ravel(np.sin(2 * np.pi * x)+10*np.cos(2 * np.pi * y)+ np.random.randn(1000,1) * 0.1)   # noisy sine wave
-
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 knn = KNN(task='regression')
 knn.fit(X_train, y_train)
@@ -142,18 +140,14 @@ knn.fit(X_train, y_train)
 predictions2=knn.predict(X_test)
 
 fig = plt.figure(figsize=(10,6))
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(X_train[:, 0], X_train[:, 1], y_train, c='red',label='Train Set')
 
-ax.scatter(X_test[:, 0], X_test[:, 1], y_test, c='blue',label='Test Set')
+plt.scatter(X_train, y_train, label="Training data", color="blue")
+plt.scatter(X_test, y_test, label="Test data", color="green")
+plt.scatter(X_test, predictions, label="Predictions (Uniform mean)", color="red")
+plt.scatter(X_test, predictions2, label="Predictions (Weighted mean)", color="black")
 
-ax.scatter(X_test[:, 0], X_test[:, 1], predictions, marker='^', c='black',label='Predictions (Uniform Mean)')
-
-ax.scatter(X_test[:, 0], X_test[:, 1], predictions2, c='yellow',label='Predictions (Weighted Mean)')
-
-ax.set_title('Scatter Plot 3D with Train Set and Test Set')
-ax.legend()
-
+plt.legend()
+plt.show()    
 plt.show()
 
 max_k=20
@@ -175,9 +169,9 @@ for k in range(0,max_k):
     
     mse_w[k]=1/2*np.sum((predictions_w-y_test)**2)
       
-plt.plot(range(1,len(mse_w)+1),mse_w, marker='^', linestyle='-', color='b', label='Weighted')
+plt.plot(range(1,len(mse_w)+1),mse_w, marker='^', linestyle='-', color='b', label='Weighted Mean')
 
-plt.plot(range(1,len(mse_u)+1),mse_u, marker='o', linestyle='-', color='r', label='Uniform')
+plt.plot(range(1,len(mse_u)+1),mse_u, marker='o', linestyle='-', color='r', label='Uniform Mean')
 
 
 plt.xlabel('Neighbours K')
